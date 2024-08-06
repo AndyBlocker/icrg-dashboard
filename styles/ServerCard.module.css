@@ -1,0 +1,137 @@
+.card {
+    margin: 10px;
+    border-radius: 15px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  }
+  
+  .circleContainer {
+    display: flex;
+    justify-content: space-around;
+    flex-wrap: nowrap;
+  }
+  
+  .circleItem {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin: 10px;
+  }
+  
+  .circleLabel {
+    margin-top: 10px;
+  }
+  
+  /* 确保在小屏设备上布局不变 */
+  @media (max-width: 600px) {
+    .circleContainer {
+      flex-wrap: nowrap;
+    }
+  }
+  
+/* styles/ServerCard.module.css */
+.cardTitle {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer; /* 添加鼠标手势 */
+  }
+  
+  .machineAlias {
+    font-size: 0.8em;
+    color: gray;
+  }
+  
+  .greenText {
+    color: green;
+    font-size: 0.8em;
+  }
+  
+  .redText {
+    color: red;
+    font-size: 0.8em;
+  }
+  
+  .circleContainer {
+    display: flex;
+    justify-content: space-around;
+  }
+  
+  .circleItem {
+    text-align: center;
+    margin: 10px;
+  }
+  
+  .circleLabel {
+    margin-top: 10px;
+  }
+  
+  .gpuDetail {
+    margin-bottom: 20px;
+  }
+  
+  .gpuLabel {
+    margin-top: 10px;
+    text-align: center;
+  }
+  
+  .progress-container {
+    flex-grow: 1;
+    margin-left: 8px;
+    background-color: #f0f0f0;
+    border-radius: 4px;
+    padding: 4px;
+    width: 100%;
+  }
+  
+  .cardContainer {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+  }
+  
+  .card {
+    flex: 1 1 calc(33.333% - 20px); /* 响应式布局 */
+    margin: 10px;
+    min-height: 200px; /* 设置一个最小高度，确保卡片大小相同 */
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .circleContainer {
+    display: flex;
+    justify-content: space-between;
+    flex-grow: 1; /* 使圆形容器占据剩余空间 */
+  }
+  
+  .circleItem {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .circleLabel {
+    margin-top: 10px;
+    font-size: 14px;
+    color: #333;
+  }
+  
+  .cardTitle {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  
+  .machineAlias {
+    font-size: 12px;
+    color: #999;
+  }
+  
+  .greenText {
+    color: #28a745;
+  }
+  
+  .redText {
+    color: #dc3545;
+  }
+  
+  

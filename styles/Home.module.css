@@ -1,0 +1,11 @@
+.gridContainer {
+    display: grid;
+    gap: 16px;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); /* 自动调整列数和列宽 */
+    justify-items: center; /* 水平居中对齐 */
+  }
+  
+  .gridItem {
+    width: 100%;
+  }
+  
