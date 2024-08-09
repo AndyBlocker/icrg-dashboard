@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
-import { Row, Col } from 'antd';
+import { Card } from 'antd';
 import ServerCard from '../components/ServerCard';
 import { fetchSummary } from '../utils/api';
-import styles from '../styles/Home.module.css'
+import styles from '../styles/Home.module.css';
 
 export default function Home() {
   const [servers, setServers] = useState([]);
@@ -25,9 +25,9 @@ export default function Home() {
   return (
     <div className="container">
       <h1 className="text-center">ICRG Server Dashboard</h1>
-      <div className={styles.gridContainer}>
+      <div className={styles.listContainer}>
         {servers.map(server => (
-          <div key={server.machine_name} className={styles.gridItem}>
+          <div key={server.machine_name} className={styles.listItem}>
             <ServerCard server={server} />
           </div>
         ))}

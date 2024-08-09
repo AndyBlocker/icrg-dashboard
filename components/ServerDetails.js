@@ -1,4 +1,4 @@
-import { Drawer, Typography, Space, Divider, Descriptions, Progress } from 'antd';
+import { Drawer, Typography, Space, Divider, Descriptions, Progress, List } from 'antd';
 import { useEffect, useState } from 'react';
 import AvailabilityBar from './AvailabilityBar';
 
@@ -165,21 +165,34 @@ const ServerDetails = ({ server, visible, onClose }) => {
         </div>
         <Divider />
         <div>
+          <Title level={3}>Top Processes</Title>
+          <List
+            dataSource={server.top_processes}
+            renderItem={(item) => (
+              <List.Item>
+                <span>{item.user}: {item.full_cmd}</span>
+              </List.Item>
+            )}
+          />
+
+        </div>
+        <Divider />
+        <div>
           <Title level={3}>Availability</Title>
           <AvailabilityBar data={availabilityData} totalDays={90} />
           {availabilityData.length > 0 && (
-            <div>
-              <Title level={4}>Detailed Events</Title>
-              {availabilityData.map((event, index) => (
-                <div key={index}>
-                  <Text>
-                    {new Date(event.timestamp * 1000).toLocaleString()}: {event.event} - Duration: {formatDuration(event.details.duration)}
-                  </Text>
-                  <br />
-                </div>
-              ))}
-            </div>
-          )}
+          <div>
+            <Title level={4}>Detailed Events</Title>
+            {availabilityData.map((event, index) => (
+              <div key={index}>
+                <Text>
+                  {new Date(event.timestamp * 1000).toLocaleString()}: {event.event} - Duration: {formatDuration(event.details?.duration || 0)}
+                </Text>
+                <br />
+              </div>
+            ))}
+          </div>
+        )}
         </div>
       </Space>
     </Drawer>

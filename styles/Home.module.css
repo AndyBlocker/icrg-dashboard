@@ -1,11 +1,12 @@
-.gridContainer {
-    display: grid;
+.listContainer {
+    display: flex;
+    flex-direction: column;
     gap: 16px;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); /* 自动调整列数和列宽 */
-    justify-items: center; /* 水平居中对齐 */
   }
   
-  .gridItem {
+  .listItem {
+    display: flex;
+    justify-content: center;
     width: 100%;
   }
   
