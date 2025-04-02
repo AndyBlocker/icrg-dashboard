@@ -1,4 +1,4 @@
-# [ICRG Dashboard](mer.dev/icrg_dashstatus)
+# [ICRG Dashboard](https://mer.dev/icrg_status)
 
 Backend: Flask + SQLite
 Frontend: Vite + TailwindCSS
