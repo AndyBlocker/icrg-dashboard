@@ -1,58 +1,87 @@
 import React, { useMemo } from 'react';
 import { getGaugeColor, getUtilizationColor } from '../utils';
 
-const Gauge = ({ percentage, label, size = 'md' }) => {
+const Gauge = ({ 
+  percentage, 
+  label, 
+  size = 80,
+  strokeWidth = 6,
+  showLabel = true,
+  animated = true,
+  className = ''
+}) => {
   const validPercentage = Math.min(100, Math.max(0, percentage || 0));
   
-  // Size dimensions
-  const dimensions = useMemo(() => {
-    switch(size) {
-      case 'sm': return { wrapper: 'w-22 h-22', text: 'text-sm', labelText: 'text-xs', radius: 45 };
-      case 'lg': return { wrapper: 'w-40 h-40', text: 'text-2xl', labelText: 'text-sm', radius: 45 };
-      default: return { wrapper: 'w-25 h-25 sm:w-24 sm:h-24', text: 'text-lg', labelText: 'text-xs', radius: 45 };
-    }
-  }, [size]);
-  
-  const radius = dimensions.radius;
+  // 计算 SVG 参数
+  const center = size / 2;
+  const radius = (size - strokeWidth) / 2;
   const circumference = 2 * Math.PI * radius;
   const strokeDashoffset = circumference - (validPercentage / 100) * circumference;
-  const color = getGaugeColor(validPercentage);
+  
+  // 获取颜色
+  const strokeColor = getGaugeColor(validPercentage);
   const textColor = getUtilizationColor(validPercentage);
   
+  // 响应式文字大小
+  const fontSize = useMemo(() => {
+    if (size <= 50) return 'text-xs';
+    if (size <= 80) return 'text-sm';
+    if (size <= 120) return 'text-base';
+    return 'text-lg';
+  }, [size]);
+  
+  const labelFontSize = useMemo(() => {
+    if (size <= 50) return 'text-xs';
+    if (size <= 80) return 'text-xs';
+    return 'text-sm';
+  }, [size]);
+
   return (
-    <div className={`relative ${dimensions.wrapper} flex items-center justify-center`}>
-      <svg className="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet">
-        {/* Background circle */}
-        <circle 
-          cx="50" 
-          cy="50" 
-          r={radius} 
-          fill="none" 
-          stroke="#e5e7eb" 
-          strokeWidth="8"
-          className="dark:stroke-gray-700" 
+    <div className={`relative inline-flex items-center justify-center ${className}`}>
+      <svg 
+        width={size} 
+        height={size} 
+        className="transform -rotate-90"
+      >
+        {/* 背景圆环 */}
+        <circle
+          cx={center}
+          cy={center}
+          r={radius}
+          fill="none"
+          stroke="currentColor"
+          strokeWidth={strokeWidth}
+          className="text-gray-200 dark:text-gray-700"
         />
-        {/* Foreground circle */}
-        <circle 
-          cx="50" 
-          cy="50" 
-          r={radius} 
-          fill="none" 
-          stroke={color} 
-          strokeWidth="8" 
-          strokeDasharray={circumference} 
-          strokeDashoffset={strokeDashoffset} 
-          strokeLinecap="round" 
-          transform="rotate(-90 50 50)" 
+        
+        {/* 进度圆环 */}
+        <circle
+          cx={center}
+          cy={center}
+          r={radius}
+          fill="none"
+          stroke={strokeColor}
+          strokeWidth={strokeWidth}
+          strokeDasharray={circumference}
+          strokeDashoffset={strokeDashoffset}
+          strokeLinecap="round"
+          className={animated ? 'transition-all duration-1000 ease-out' : ''}
+          style={{
+            filter: 'drop-shadow(0 0 6px rgba(99, 102, 241, 0.4))'
+          }}
         />
       </svg>
-      <div className="absolute flex flex-col items-center justify-center">
-        <span className={`font-bold ${dimensions.text} ${textColor}`}>
-          {validPercentage.toFixed(1)}%
+      
+      {/* 中心内容 */}
+      <div className="absolute inset-0 flex flex-col items-center justify-center">
+        <span className={`font-bold ${fontSize} ${textColor}`}>
+          {validPercentage.toFixed(0)}%
         </span>
-        <span className={`${dimensions.labelText} text-gray-500 dark:text-gray-400 mt-1`}>
-          {label}
-        </span>
+        {showLabel && label && (
+          <span className={`${labelFontSize} text-gray-500 dark:text-gray-400 font-medium`}>
+            {label}
+          </span>
+        )}
       </div>
     </div>
   );

@@ -7,7 +7,7 @@ import psutil
 import subprocess
 from collections import defaultdict
 
-# SERVER_URL = 
+SERVER_URL = "https://api.mer.dev/icrg_status/receive"
 INTERVAL = 1 
 
 # 你可以在这里写死，也可以用环境变量

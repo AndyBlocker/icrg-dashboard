@@ -1,5 +1,6 @@
 import { format, formatDistanceToNow, parseISO } from 'date-fns';
 import { zhCN } from 'date-fns/locale';
+import { THRESHOLDS, STATUS_TYPES } from '../constants';
 
 // 从字符串解析GPU信息
 export const parseGpuInfo = (gpuInfoStr) => {
@@ -92,6 +93,52 @@ export const formatDateTime = (dateString) => {
   }
 };
 
+// 格式化日期时间为紧凑格式（用于小卡片）
+export const formatCompactDateTime = (dateString) => {
+  if (!dateString) return '未知';
+  
+  try {
+    const date = parseISO(dateString);
+    const now = new Date();
+    const diffHours = Math.floor((now - date) / (1000 * 60 * 60));
+    const diffDays = Math.floor(diffHours / 24);
+    
+    // 总是显示月日和时间，确保信息完整
+    if (diffHours < 1) {
+      // 1小时内：刚刚
+      return '刚刚';
+    } else if (diffHours < 24) {
+      // 24小时内：今天 + 时间
+      return `今天 ${format(date, 'HH:mm')}`;
+    } else if (diffDays === 1) {
+      // 昨天
+      return `昨天 ${format(date, 'HH:mm')}`;
+    } else if (diffDays < 7) {
+      // 一周内：月日 + 时间
+      return format(date, 'M/d HH:mm');
+    } else {
+      // 更早：也显示时间
+      return format(date, 'M/d HH:mm');
+    }
+  } catch (e) {
+    console.error('Error formatting date:', e);
+    return '未知';
+  }
+};
+
+// 格式化日期为YYYY-MM-DD格式
+export const formatDate = (date) => {
+  if (!date) return '';
+  
+  try {
+    const dateObj = date instanceof Date ? date : parseISO(date);
+    return format(dateObj, 'yyyy-MM-dd');
+  } catch (e) {
+    console.error('Error formatting date:', e);
+    return '';
+  }
+};
+
 // 计算平均GPU利用率
 export const calculateAverageGpuUtilization = (gpus) => {
   if (!gpus || gpus.length === 0) return 0;
@@ -149,4 +196,81 @@ export const extractUsersFromHistory = (historyData) => {
   });
   
   return Array.from(users);
+};
+
+// 获取使用率状态
+export const getUsageStatus = (usage, type = 'cpu') => {
+  if (usage === null || usage === undefined) return STATUS_TYPES.UNKNOWN;
+  
+  const thresholds = THRESHOLDS[type] || THRESHOLDS.cpu;
+  
+  if (usage >= thresholds.danger) return STATUS_TYPES.OFFLINE;
+  if (usage >= thresholds.warning) return STATUS_TYPES.WARNING;
+  return STATUS_TYPES.ONLINE;
+};
+
+// 获取服务器在线状态
+export const getServerStatus = (lastHeartbeat, offlineThreshold = 300000) => {
+  if (!lastHeartbeat) return STATUS_TYPES.UNKNOWN;
+  
+  const now = new Date();
+  const heartbeatTime = new Date(lastHeartbeat);
+  const timeDiff = now - heartbeatTime;
+  
+  if (timeDiff > offlineThreshold) return STATUS_TYPES.OFFLINE;
+  return STATUS_TYPES.ONLINE;
+};
+
+// 格式化字节大小
+export const formatBytes = (bytes, decimals = 2) => {
+  if (!bytes) return '0 Bytes';
+
+  const k = 1024;
+  const dm = decimals < 0 ? 0 : decimals;
+  const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+};
+
+// 防抖函数
+export const debounce = (func, wait) => {
+  let timeout;
+  return function executedFunction(...args) {
+    const later = () => {
+      clearTimeout(timeout);
+      func(...args);
+    };
+    clearTimeout(timeout);
+    timeout = setTimeout(later, wait);
+  };
+};
+
+// 节流函数
+export const throttle = (func, limit) => {
+  let inThrottle;
+  return function() {
+    const args = arguments;
+    const context = this;
+    if (!inThrottle) {
+      func.apply(context, args);
+      inThrottle = true;
+      setTimeout(() => inThrottle = false, limit);
+    }
+  };
+};
+
+// 获取状态颜色
+export const getStatusColor = (status) => {
+  switch (status) {
+    case STATUS_TYPES.ONLINE:
+      return 'text-green-600 dark:text-green-400';
+    case STATUS_TYPES.WARNING:
+      return 'text-yellow-600 dark:text-yellow-400';
+    case STATUS_TYPES.OFFLINE:
+      return 'text-red-600 dark:text-red-400';
+    default:
+      return 'text-gray-600 dark:text-gray-400';
+  }
 };

@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
 import Gauge from './Gauge';
+import Card from './Card';
 import { 
   parseGpuInfo, 
   parseTopProcesses,
@@ -7,24 +8,23 @@ import {
   calculateAverageGpuUtilization,
   calculateAverageGpuMemoryUtilization
 } from '../utils';
+import { SERVER_TYPES } from '../constants';
 
-const ServerCard = ({ server, onClick, isSelected }) => {
-  const gpuInfo = useMemo(() => parseGpuInfo(server.gpu_info), [server.gpu_info]);
-  const topProcesses = useMemo(() => parseTopProcesses(server.top_processes), [server.top_processes]);
+const ServerCard = ({ server, onClick, isSelected = false }) => {
+  // 解析数据
+  const gpuData = useMemo(() => parseGpuInfo(server.gpu_info), [server.gpu_info]);
+  const processData = useMemo(() => parseTopProcesses(server.top_processes), [server.top_processes]);
   
-  // 获取主要用户（取内存使用最多的3个进程的用户）
+  // 获取主要用户（最多显示2个）
   const mainUsers = useMemo(() => {
-    if (!topProcesses || topProcesses.length === 0) return [];
+    if (!processData?.length) return [];
     
     const userMap = new Map();
     
-    topProcesses.forEach(process => {
+    processData.forEach(process => {
       if (process.user && process.user !== 'Unknown') {
         if (!userMap.has(process.user)) {
-          userMap.set(process.user, {
-            user: process.user,
-            totalMemory: 0
-          });
+          userMap.set(process.user, { user: process.user, totalMemory: 0 });
         }
         userMap.get(process.user).totalMemory += process.usedMemory || 0;
       }
@@ -32,72 +32,111 @@ const ServerCard = ({ server, onClick, isSelected }) => {
     
     return Array.from(userMap.values())
       .sort((a, b) => b.totalMemory - a.totalMemory)
-      .slice(0, 3);
-  }, [topProcesses]);
+      .slice(0, 2); // 只显示前2个用户
+  }, [processData]);
   
-  // 判断是否是GPU服务器
-  const isGpuServer = useMemo(() => {
-    return server.server_type === 'GPU' && gpuInfo.length > 0;
-  }, [server.server_type, gpuInfo]);
+  // 计算GPU相关数据
+  const isGpuServer = server.server_type === SERVER_TYPES.GPU && gpuData.length > 0;
+  const avgGpuUtilization = useMemo(() => calculateAverageGpuUtilization(gpuData), [gpuData]);
+  const avgGpuMemoryUtilization = useMemo(() => calculateAverageGpuMemoryUtilization(gpuData), [gpuData]);
   
-  // 计算平均GPU利用率和显存利用率
-  const avgGpuUtilization = useMemo(() => 
-    calculateAverageGpuUtilization(gpuInfo), [gpuInfo]);
-    
-  const avgGpuMemoryUtilization = useMemo(() => 
-    calculateAverageGpuMemoryUtilization(gpuInfo), [gpuInfo]);
-  
+  // 服务器类型标签样式
+  const getTypeTagClasses = (type) => {
+    return type === SERVER_TYPES.GPU 
+      ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white'
+      : 'bg-gradient-to-r from-green-500 to-teal-600 text-white';
+  };
+
   return (
-    <div 
-      className={`card-gradient rounded-xl shadow-md p-4 transition-all-300 cursor-pointer 
-        hover:shadow-lg hover:scale-[1.02] ${isSelected ? 'ring-2 ring-primary-500 scale-[1.02]' : ''}`} 
-      onClick={onClick}
+    <Card
+      clickable
+      selected={isSelected}
+      onClick={() => onClick(server)}
+      className="p-3 sm:p-4 hover:scale-[1.02] transition-all duration-300 hover:shadow-xl group"
     >
-      <div className="flex justify-between items-start mb-4">
-        <div>
-          <h3 className="text-xl font-bold text-gray-800 dark:text-white">
+      {/* 服务器标题和状态 */}
+      <div className="flex items-start justify-between mb-2 sm:mb-3">
+        <div className="flex-1 min-w-0">
+          <h3 className="font-bold text-gray-900 dark:text-white text-sm sm:text-base truncate group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">
             {server.machine_name}
           </h3>
-          <p className="text-sm text-gray-600 dark:text-gray-300">
-            {server.machine_alias || '未命名服务器'}
+          <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
+            {server.machine_alias || '服务器'}
           </p>
         </div>
-        <div className="text-xs text-gray-500 dark:text-gray-400">
-          更新于 {formatLastUpdated(server.last_heartbeat)}
+        
+        <div className="flex flex-col items-end space-y-1">
+          <span className={`px-1.5 sm:px-2 py-0.5 text-xs font-medium rounded-full shadow-sm ${getTypeTagClasses(server.server_type)}`}>
+            {server.server_type}
+          </span>
+          <div className="text-xs text-gray-400 dark:text-gray-500 text-right">
+            {formatLastUpdated(server.last_heartbeat)}
+          </div>
         </div>
       </div>
-      
-      <div className="flex justify-center items-center gap-6 my-4">
+
+      {/* 紧凑的资源仪表盘 */}
+      <div className="flex justify-center space-x-4 sm:space-x-6 mb-3 sm:mb-4">
         {isGpuServer ? (
           <>
-            <Gauge percentage={avgGpuUtilization} label="GPU 利用率" />
-            <Gauge percentage={avgGpuMemoryUtilization} label="GPU 显存" />
+            <div className="text-center">
+              <Gauge 
+                percentage={avgGpuUtilization} 
+                size={60}
+                strokeWidth={4}
+                className="sm:w-[70px] sm:h-[70px]"
+              />
+              <p className="text-xs text-gray-600 dark:text-gray-400 mt-2 font-medium">GPU</p>
+            </div>
+            <div className="text-center">
+              <Gauge 
+                percentage={avgGpuMemoryUtilization} 
+                size={60}
+                strokeWidth={4}
+                className="sm:w-[70px] sm:h-[70px]"
+              />
+              <p className="text-xs text-gray-600 dark:text-gray-400 mt-2 font-medium">显存</p>
+            </div>
           </>
         ) : (
           <>
-            <Gauge percentage={server.cpu_usage} label="CPU 利用率" />
-            <Gauge percentage={server.mem_usage} label="内存利用率" />
+            <div className="text-center">
+              <Gauge 
+                percentage={server.cpu_usage || 0} 
+                size={60}
+                strokeWidth={4}
+                className="sm:w-[70px] sm:h-[70px]"
+              />
+              <p className="text-xs text-gray-600 dark:text-gray-400 mt-2 font-medium">CPU</p>
+            </div>
+            <div className="text-center">
+              <Gauge 
+                percentage={server.mem_usage || 0} 
+                size={60}
+                strokeWidth={4}
+                className="sm:w-[70px] sm:h-[70px]"
+              />
+              <p className="text-xs text-gray-600 dark:text-gray-400 mt-2 font-medium">内存</p>
+            </div>
           </>
         )}
       </div>
-      
+
+      {/* 主要用户（紧凑显示） */}
       {mainUsers.length > 0 && (
-        <div className="mt-4">
-          <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">主要用户</h4>
-          <div className="flex flex-wrap gap-2">
-            {mainUsers.map((userInfo, idx) => (
-              <div 
-                key={`${userInfo.user}-${idx}`} 
-                className="px-2 py-1 bg-gray-100 dark:bg-gray-700 rounded-full text-xs"
-              >
-                {userInfo.user} ({Math.round(userInfo.totalMemory / 1024)}GB)
-              </div>
-            ))}
-          </div>
+        <div className="flex flex-wrap gap-1 justify-center">
+          {mainUsers.map((userInfo, idx) => (
+            <span 
+              key={`${userInfo.user}-${idx}`} 
+              className="px-2 py-0.5 bg-gray-100 dark:bg-gray-700 rounded text-xs text-gray-600 dark:text-gray-300"
+            >
+              {userInfo.user}
+            </span>
+          ))}
         </div>
       )}
-    </div>
+    </Card>
   );
 };
 
-export default ServerCard;
+export default React.memo(ServerCard);
